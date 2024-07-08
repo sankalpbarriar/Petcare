@@ -6,7 +6,6 @@ import SearchForm from '@/components/searchform'
 import Stats from '@/components/stats'
 
 const Page = async () => {
-  
   return (
     <main>
       <div className='flex items-center justify-between text-white py-8'>
