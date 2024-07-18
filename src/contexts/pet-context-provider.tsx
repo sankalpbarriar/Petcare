@@ -12,6 +12,7 @@ type TPetContext = {
     selectedPetId: string | null;
     selectedPet: Pet | undefined;
     numberPets: number;
+    handleCheckoutPet:(id:string) => void;
     handleChangeSelectedPetId: (id: string) => void;  //fucntion that accepts id and dosent return anything
 }
 
@@ -27,7 +28,14 @@ export default function PetContextProvider({ data, children }: PetContextProvide
     const selectedPet = pets.find((pet) => pet.id === selectedPetId)
     const numberPets = pets.length;
 
-    //inspite of sending only the sleter fucntion we will create a handle function abd then submut
+    //checkout per
+    const handleCheckoutPet = (id: string) => {
+        //remove from the array
+        setPets((prev) => prev.filter(pet => pet.id !== id));
+        setSelectedPetId(null);
+    }
+
+    //despite of sending only the sleter fucntion we will create a handle function abd then submut
     const handleChangeSelectedPetId = (id: string) => {
         setSelectedPetId(id);
     }
@@ -38,6 +46,7 @@ export default function PetContextProvider({ data, children }: PetContextProvide
             selectedPetId,
             numberPets,
             handleChangeSelectedPetId,
+            handleCheckoutPet,
             selectedPet
         }}
     >

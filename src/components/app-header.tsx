@@ -19,7 +19,7 @@ const routes = [
 
 function AppHeader() {
     const activePathname = usePathname();
-    console.log(activePathname)
+    // console.log(activePathname)
     return (
         <header className='flex justify-between items-center border-b border-white/20 py-2'>
             <Logo />
