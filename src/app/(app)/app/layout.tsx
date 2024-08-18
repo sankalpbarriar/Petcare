@@ -3,19 +3,14 @@ import AppHeader from '@/components/app-header'
 import BackgroundPattern from '@/components/background'
 import PetContextProvider from '@/contexts/pet-context-provider'
 import SearchContextProvider from '@/contexts/search-context-provider'
-import { Pet } from '@/lib/types'
+import prisma from "@/lib/db"
 import React from 'react'
 
 async function Layout({ children }: {
   children: React.ReactNode
 }) {
   //this will fetch the data on the server side and send it to the client side (context provider) which in turn spread it around the app
-  const response = await fetch('https://bytegrad.com/course-assets/projects/petsoft/api/pets')
-  if (!response.ok) {
-    throw new Error('Could not fetch pets')
-  }
-  const data: Pet[] = await response.json();
-  console.log(data)
+  const pets=await prisma.pet.findMany({})
 
   return <>
     <BackgroundPattern />
@@ -23,7 +18,7 @@ async function Layout({ children }: {
       <AppHeader />
 
       <SearchContextProvider>
-        <PetContextProvider data={data}>{children}</PetContextProvider>
+        <PetContextProvider data={pets}>{children}</PetContextProvider>
       </SearchContextProvider>
       
       <AppFooter />
