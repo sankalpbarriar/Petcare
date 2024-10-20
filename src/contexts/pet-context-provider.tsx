@@ -1,4 +1,5 @@
 'use client'
+import { addPet } from "@/actions/actions";
 import { Pet } from "@/lib/types";
 import { createContext, useState } from "react";
 
@@ -13,7 +14,7 @@ type TPetContext = {
     selectedPet: Pet | undefined;
     numberPets: number;
     handleAddPet: (newPet: Omit<Pet, 'id'>) => void;
-    handleEditPet: (petId:string, newPet: Omit<Pet, 'id'>)=>void;
+    handleEditPet: (petId: string, newPet: Omit<Pet, 'id'>) => void;
     handleCheckoutPet: (id: string) => void;
     handleChangeSelectedPetId: (id: string) => void;  //fucntion that accepts id and dosent return anything
 }
@@ -22,8 +23,7 @@ type TPetContext = {
 export const PetContext = createContext<TPetContext | null>(null);
 
 //yahan se state har jagah use hoga
-export default function PetContextProvider({ data, children }: PetContextProviderProps) {
-    const [pets, setPets] = useState(data);
+export default function PetContextProvider({ data: pets, children }: PetContextProviderProps) {
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
 
     // derived state
@@ -31,12 +31,16 @@ export default function PetContextProvider({ data, children }: PetContextProvide
     const numberPets = pets.length;
 
     //event handler add pet --> it recieves formadata excpet id and to the state
-    const handleAddPet = (newPet: Omit<Pet, 'id'>) => {
-        setPets(prev => [...prev, {
-            ...newPet,
-            id: Date.now().toString(),
-        }
-        ]);
+    const handleAddPet = async (newPet: Omit<Pet, 'id'>) => {
+        // setPets(prev => [...prev, {
+        //     ...newPet,
+        //     id: Date.now().toString(),
+        // }
+        // ]);
+
+        //mutating the data -> adding the pet to the backend
+        await addPet(newPet);   //thoudh we are not creating any API end point there is still a network request
+
     }
 
     const handleEditPet = (petId: string, newPetData: Omit<Pet, "id">) => {
@@ -44,7 +48,7 @@ export default function PetContextProvider({ data, children }: PetContextProvide
             prev.map((pet) => {
                 if (pet.id === petId) {  //it will look for the pet data and if the id matches with the given one it will return the new pet data
                     return {
-                        id:petId,
+                        id: petId,
                         ...newPetData,
                     }
                 }
