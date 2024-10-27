@@ -3,6 +3,8 @@ import { usePetContext } from "@/lib/hooks";
 import { Pet } from "@/lib/types";
 import Image from "next/image"
 import PetButton from "./pet-button";
+import { deletePet } from "@/actions/actions";
+import { useTransition } from "react";
 
 function PetDetails() {
 
@@ -30,7 +32,8 @@ type Props = {
   pet: Pet;
 }
 function Topbar({ pet }: Props) {
-  const {handleCheckoutPet}=usePetContext();
+  const { handleCheckoutPet } = usePetContext();
+  const [isPending, startTransition] = useTransition();
   return (
     <div className="flex items-center bg-white px-8 py-5 border-b border-light">
       <Image
@@ -43,7 +46,14 @@ function Topbar({ pet }: Props) {
       <h2 className="text-3xl font-semibold leading-7 ml-5">{pet?.name}</h2>
       <div className="ml-auto space-x-2">
         <PetButton actionType="edit">edit</PetButton>
-        <PetButton actionType="checkout" onClick={()=>handleCheckoutPet(pet.id)}>checkout</PetButton>
+        <PetButton actionType="checkout"
+          disabled={isPending}
+          onClick={async () => {
+            startTransition(async () => {
+              await deletePet(pet.id);
+            })
+          }}
+        >checkout</PetButton>
       </div>
     </div>
   )
