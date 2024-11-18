@@ -37,7 +37,7 @@ function Topbar({ pet }: Props) {
   return (
     <div className="flex items-center bg-white px-8 py-5 border-b border-light">
       <Image
-        src={pet?.imageUrl}
+        src={pet.imageUrl}
         alt="slected pet iamge"
         width={75}
         height={75}
@@ -48,11 +48,7 @@ function Topbar({ pet }: Props) {
         <PetButton actionType="edit">edit</PetButton>
         <PetButton actionType="checkout"
           disabled={isPending}
-          onClick={async () => {
-            startTransition(async () => {
-              await deletePet(pet.id);
-            })
-          }}
+          onClick={async () => await handleCheckoutPet(pet.id)}
         >checkout</PetButton>
       </div>
     </div>
