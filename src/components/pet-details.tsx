@@ -1,10 +1,8 @@
 'use client'
 import { usePetContext } from "@/lib/hooks";
-import { Pet } from "@/lib/types";
 import Image from "next/image"
 import PetButton from "./pet-button";
-import { deletePet } from "@/actions/actions";
-import { useTransition } from "react";
+import { Pet } from "@prisma/client";
 
 function PetDetails() {
 
@@ -33,7 +31,6 @@ type Props = {
 }
 function Topbar({ pet }: Props) {
   const { handleCheckoutPet } = usePetContext();
-  const [isPending, startTransition] = useTransition();
   return (
     <div className="flex items-center bg-white px-8 py-5 border-b border-light">
       <Image
@@ -43,11 +40,10 @@ function Topbar({ pet }: Props) {
         height={75}
         className="h-[75px] w-[75px] rounded-full object-cover"
       />
-      <h2 className="text-3xl font-semibold leading-7 ml-5">{pet?.name}</h2>
+      <h2 className="text-3xl font-semibold leading-7 ml-5">{pet.name}</h2>
       <div className="ml-auto space-x-2">
         <PetButton actionType="edit">edit</PetButton>
         <PetButton actionType="checkout"
-          disabled={isPending}
           onClick={async () => await handleCheckoutPet(pet.id)}
         >checkout</PetButton>
       </div>
@@ -60,11 +56,11 @@ function OtherInfo({ pet }: Props) {
     <div className="flex justify-around py-10 px-5 text-center">
       <div>
         <h3 className="text-[13px] font-medium uppercase text-zinc-700">owner name</h3>
-        <p className="mt-1 text-lg text-zinc-800">{pet?.ownerName}</p>
+        <p className="mt-1 text-lg text-zinc-800">{pet.ownerName}</p>
       </div>
       <div>
         <h3 className="text-[13px] font-medium uppercase text-zinc-700">age</h3>
-        <p className="mt-1 text-lg text-zinc-800">{pet?.age}</p>
+        <p className="mt-1 text-lg text-zinc-800">{pet.age}</p>
       </div>
     </div>
   )
