@@ -13,8 +13,6 @@ async function Layout({ children }: {
   //this will fetch the data on the server side and send it to the client side (context provider) which in turn spread it around the app
   console.log("renedring layout...")
   const pets=await prisma.pet.findMany({})   //fetching pets from DB
-  console.log(pets.length)
-  
   return <>
     <BackgroundPattern />
     <div className=' flex flex-col max-w-[1050px] mx-auto px-4  min-h-screen'>

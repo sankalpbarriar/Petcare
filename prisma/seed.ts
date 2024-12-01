@@ -1,8 +1,14 @@
-import { PrismaClient } from "@prisma/client";
-const prisma= new PrismaClient();
+import { Prisma, PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt"
 
-const pets= [
-    {
+const prisma = new PrismaClient();
+
+const userData: Prisma.UserCreateInput = {
+  email: "example@gmail.com",
+  hashedPassword: "",
+  pets: {
+    create: [
+      {
         name: "Benjamin",
         ownerName: "John Doe",
         imageUrl:
@@ -27,25 +33,29 @@ const pets= [
         age: 4,
         notes: "Allergic to chicken.",
       },
-];
+    ],
+  },
+};
 
-async function main(){
+async function main() {
   console.log(`Start seeding ...`);
 
-  for (const pet of pets) {
-    const result=await prisma.pet.create({
-      data:pet,
-    });
-    console.log(`Created pet with id: ${result.id}`);
-  }
-  console.log(`Seeding finished`);
+  const hashedPassword = await bcrypt.hash("example", 10);  //hashing the actual password before putting it into DB
+  userData.hashedPassword = hashedPassword;
+
+  await prisma.user.create({
+    data: userData,
+  });
+
+  console.log(`Seeding finished.`);
 }
+
 main()
-  .then(async () =>{
-  await prisma.$disconnect();
-})
-.catch(async(e)=>{
-  console.log(e);
-  await prisma.$disconnect();
-  process.exit(1);
-})
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });
