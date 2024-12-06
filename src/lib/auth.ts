@@ -48,9 +48,27 @@ const config = {
       const isTryingToAccessApp = request.nextUrl.pathname.includes("/app");
       if (isLoggedIn && isTryingToAccessApp) return true;
       if (!isLoggedIn && isTryingToAccessApp) return false;
-      if (isLoggedIn && !isTryingToAccessApp) return Response.redirect(new URL('/app/dashboard',request.nextUrl));
-      if(!isLoggedIn && !isTryingToAccessApp) return true;
+      if (isLoggedIn && !isTryingToAccessApp)
+        return Response.redirect(new URL("/app/dashboard", request.nextUrl));
+      if (!isLoggedIn && !isTryingToAccessApp) return true;
       return false;
+    },
+    //we want to pass more information when the token is created
+    jwt: ({ token, user }) => {
+      if (user) {
+        // on sign in
+        token.userId = user.id;
+      }
+      return token;
+    },
+    //it will be availbable to the client so we need to be careful
+    //we are trying to assign id as well into the token which by default can have only name and email
+    session: ({ session, token }) => {
+      if(session.user){
+        session.user.id = token.userId ;
+      }
+
+      return session;
     },
   },
 } satisfies NextAuthConfig;

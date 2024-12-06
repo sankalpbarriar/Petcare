@@ -6,7 +6,7 @@ const Page = () => {
   return (
     <main>
       <H1 className="mb-5 text-center">Sign up</H1>
-      <AuthForm type='signup'/>
+      <AuthForm type='signUp'/>
       <p className='mt-6 text-sm text-zinc-500'>
       Already have an account ?{" "}
       <Link className="font-medium" href='/login'>
