@@ -1,2 +1,2 @@
 export const DEFAULT_PET_IMAGE =
-  "https://i.ibb.co/3hhthJS/dog-1650609.png";
+  "https://i.ibb.co/ZYYpw3d/dog-Default.jpg";

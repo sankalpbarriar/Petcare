@@ -2,8 +2,6 @@ import { DEFAULT_PET_IMAGE } from "@/lib/constants";
 import { z } from "zod";
 
 export const petIdSchema = z.string().cuid();
-
-export type TPetForm = z.infer<typeof petFormSchema>; //zod solve the type issues itself
 //ZOD Validation
 export const petFormSchema = z
   .object({
@@ -24,3 +22,13 @@ export const petFormSchema = z
     ...data,
     imageUrl: data.imageUrl || DEFAULT_PET_IMAGE,
   }));
+
+export type TPetForm = z.infer<typeof petFormSchema>; //zod solve the type issues itself
+
+export const authSchema = z.object({
+  email : z.string().email().max(100),
+  password : z.string().max(90),
+})
+
+export type TAuth = z.infer<typeof authSchema>; 
+

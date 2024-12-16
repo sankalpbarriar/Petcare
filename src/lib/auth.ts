@@ -1,7 +1,8 @@
 import NextAuth, { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import prisma from "./db";
 import bcrypt from "bcryptjs";
+import { getUserByEmail } from "./server-utils";
+import { authSchema } from "./validations";
 
 const config = {
   pages: {
@@ -9,19 +10,24 @@ const config = {
   },
   session: {
     //for this duration user does not need to login again
-    maxAge: 10 * 24 * 60 * 60,
+    maxAge: 1 * 24 * 60 * 60,
     strategy: "jwt",
   },
   providers: [
     Credentials({
       async authorize(credentials) {
         //runs on login
-        const { email, password } = credentials;
-        const user = await prisma.user.findUnique({
-          where: {
-            email: email,
-          },
-        });
+
+        //validation
+        const validatedFormData = authSchema.safeParse(credentials)
+        if(!validatedFormData.success) {
+          return null;
+        }
+
+        //extract values
+        const { email, password } = validatedFormData.data;
+
+        const user = await getUserByEmail(email);
         if (!user) {
           console.log("No user found");
           return null;
@@ -64,8 +70,8 @@ const config = {
     //it will be availbable to the client so we need to be careful
     //we are trying to assign id as well into the token which by default can have only name and email
     session: ({ session, token }) => {
-      if(session.user){
-        session.user.id = token.userId ;
+      if (session.user) {
+        session.user.id = token.userId;
       }
 
       return session;
@@ -73,4 +79,9 @@ const config = {
   },
 } satisfies NextAuthConfig;
 
-export const { auth, signIn, signOut } = NextAuth(config);
+export const {
+  auth,
+  signIn,
+  signOut,
+  handlers: { GET, POST },
+} = NextAuth(config);

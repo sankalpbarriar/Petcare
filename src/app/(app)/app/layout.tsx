@@ -4,26 +4,17 @@ import BackgroundPattern from '@/components/background'
 import { Toaster } from '@/components/ui/sonner'
 import PetContextProvider from '@/contexts/pet-context-provider'
 import SearchContextProvider from '@/contexts/search-context-provider'
-import prisma from "@/lib/db"
 import React from 'react'
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+import { authCheck, getPetsByUserId } from '@/lib/server-utils'
 
 async function Layout({ children }: {
   children: React.ReactNode
 }) {
   //this will fetch the data on the server side and send it to the client side (context provider) which in turn spread it around the app
-  const session = await auth();
-  if (!session?.user) {
-    redirect('./login');
-  }
-  console.log(session)
+  const session = await authCheck();   //it looks like it is happening in client side but actually server is sending it to the client we have to deduce a method to retrieve some information onto the client side only using useSession hook
+  // console.log(session)
 
-  const pets = await prisma.pet.findMany({
-    where: {
-      userId: session.user.id,
-    }
-  })   //fetching pets from DB
+  const pets = await getPetsByUserId(session.user.id); //fetching pets from DB
 
   return <>
     <BackgroundPattern />

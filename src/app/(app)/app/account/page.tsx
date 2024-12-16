@@ -1,14 +1,10 @@
 import ContentBlock from '@/components/content-block'
 import H1 from '@/components/h1'
-import { auth } from '../../../../lib/auth'
-import { redirect } from 'next/navigation'
 import SignOutBtn from '@/components/sign-out-btn'
+import { authCheck } from '@/lib/server-utils'
 
 const Page = async () => {
-  const session = await auth();
-  if (!session?.user) {
-    redirect('/login')
-  }
+  const session = await authCheck();
 
   return (
     <main>
