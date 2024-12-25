@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { getUserByEmail } from "./server-utils";
 import { authSchema } from "./validations";
+import { sleep } from "./utils";
 
 const config = {
   pages: {
@@ -19,8 +20,8 @@ const config = {
         //runs on login
 
         //validation
-        const validatedFormData = authSchema.safeParse(credentials)
-        if(!validatedFormData.success) {
+        const validatedFormData = authSchema.safeParse(credentials);
+        if (!validatedFormData.success) {
           return null;
         }
 
@@ -38,7 +39,6 @@ const config = {
           user.hashedPassword
         );
         if (!passwordMatch) {
-          console.log("password mismatch...");
           return null;
         }
 
@@ -52,28 +52,62 @@ const config = {
       //runs on request with middleware
       const isLoggedIn = Boolean(auth?.user);
       const isTryingToAccessApp = request.nextUrl.pathname.includes("/app");
-      if (isLoggedIn && isTryingToAccessApp) return true;
+
       if (!isLoggedIn && isTryingToAccessApp) return false;
-      if (isLoggedIn && !isTryingToAccessApp)
-        return Response.redirect(new URL("/app/dashboard", request.nextUrl));
-      if (!isLoggedIn && !isTryingToAccessApp) return true;
+
+      if (isLoggedIn && isTryingToAccessApp && !auth?.user.hasAccess) {
+        return Response.redirect(new URL("/payment", request.nextUrl));
+      }
+
+      if (isLoggedIn && isTryingToAccessApp && auth?.user.hasAccess) {
+        return true;
+      }
+
+      if(isLoggedIn && (
+        request.nextUrl.pathname.includes("/login") ||
+        request.nextUrl.pathname.includes("/sign-up")) && auth?.user.hasAccess
+      ){
+        return Response.redirect(new URL('/app/dashboard', request.nextUrl))
+      }
+
+      if (isLoggedIn && !isTryingToAccessApp && !auth?.user.hasAccess) {
+        if (
+          request.nextUrl.pathname.includes("/login") ||
+          request.nextUrl.pathname.includes("/sign-up")
+        ) {
+          return Response.redirect(new URL("/payment", request.nextUrl));
+        }
+
+        return true;
+      }
+
+      if (!isLoggedIn && !isTryingToAccessApp) {
+        return true;
+      }
       return false;
     },
-    //we want to pass more information when the token is created
-    jwt: ({ token, user }) => {
+    //we want to pass more information when the token is created as next auth only gets user email from the authnicated user
+    jwt: async ({ token, user, trigger }) => {
       if (user) {
         // on sign in
-        token.userId = user.id;
+        token.userId = user.id as string;
+        token.email = user.email!;
+        token.hasAccess = user.hasAccess;
       }
+      if (trigger === "update") {
+        const userFromDb = await getUserByEmail(token.email);
+        if (userFromDb) {
+          token.hasAccess = userFromDb.hasAccess;
+        }
+      }
+
       return token;
     },
     //it will be availbable to the client so we need to be careful
     //we are trying to assign id as well into the token which by default can have only name and email
     session: ({ session, token }) => {
-      if (session.user) {
-        session.user.id = token.userId;
-      }
-
+      session.user.id = token.userId;
+      session.user.hasAccess = token.hasAccess;
       return session;
     },
   },

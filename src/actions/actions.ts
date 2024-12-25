@@ -2,7 +2,6 @@
 
 import { auth, signIn, signOut } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { sleep } from "@/lib/utils";
 import { authSchema, petFormSchema, petIdSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
@@ -11,10 +10,11 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { AuthError } from "next-auth";
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 //---------user actions---------------------
 
 export async function logIn(prevState: unknown, formData: unknown) {
-  await sleep(1000);
 
   if (!(formData instanceof FormData)) {
     return {
@@ -43,18 +43,31 @@ export async function logIn(prevState: unknown, formData: unknown) {
     throw error; //next js redirects throws error so we need to retuhrow it
   }
 }
-export async function signUp(prevState: unknown, formData: FormData) {
-  await sleep(1000);
+export async function signUp(prevState: unknown, formData: unknown) {
+  // check if formData is a FormData type
+  if (!(formData instanceof FormData)) {
+    return {
+      message: "Invalid form data.",
+    };
+  }
 
-  const hashedPassword = await bcrypt.hash(
-    formData.get("password") as string,
-    10
-  );
+  // convert formData to a plain object
+  const formDataEntries = Object.fromEntries(formData.entries());
 
+  // validation
+  const validatedFormData = authSchema.safeParse(formDataEntries);
+  if (!validatedFormData.success) {
+    return {
+      message: "Invalid form data.",
+    };
+  }
+
+  const { email, password } = validatedFormData.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
   try {
     await prisma.user.create({
       data: {
-        email: formData.get("email") as string,
+        email,
         hashedPassword,
       },
     });
@@ -62,19 +75,20 @@ export async function signUp(prevState: unknown, formData: FormData) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         return {
-          message: "Email already exists..",
+          message: "Email already exists.",
         };
       }
     }
+
     return {
-      message: "Could not create user..",
+      message: "Could not create user.",
     };
   }
+
   await signIn("credentials", formData);
 }
 
 export async function logOut() {
-  await sleep(1000)
   await signOut({ redirectTo: "/" });
 }
 
@@ -82,7 +96,6 @@ export async function logOut() {
 
 //it takes whatever we are putting in the form using action attribute and updating the db
 export async function addPet(pet: unknown) {
-  await sleep(1000);
 
   const session = await authCheck();
   //if not properly validated we do not want to intereact with the database
@@ -114,7 +127,6 @@ export async function addPet(pet: unknown) {
 }
 
 export async function editPet(petId: unknown, newPetData: unknown) {
-  await sleep(1000);
 
   //autentication check
   const session = await authCheck();
@@ -159,7 +171,6 @@ export async function editPet(petId: unknown, newPetData: unknown) {
 }
 
 export async function deletePet(petId: unknown) {
-  await sleep(1000);
 
   //authentication check
   const session = await auth();
@@ -200,4 +211,26 @@ export async function deletePet(petId: unknown) {
     };
   }
   revalidatePath("/app", "layout");
+}
+
+//--------payemtn actions ------------
+export async function createCheckoutSession() {
+  //authenticatiom check
+  const session = await authCheck();
+  console.log(session.user.email);
+  const cheeckoutSession = await stripe.checkout.sessions.create({
+    customer_email: session.user.email,
+    line_items: [
+      {
+        price: "price_1QWkykH7qhML6j1fcF6s1BCP",
+        quantity: 1,
+      },
+    ],
+    mode :"payment",
+    success_url:`${process.env.CANONICAL_URL}/payment?success=true`,  //where to send the user after successful payment
+    cancel_url:`${process.env.CANONICAL_URL}/payment?cancelled=true`
+  });
+
+  //redirect user
+  redirect(cheeckoutSession.url);
 }
